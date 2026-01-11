@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Hours Tracker</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+        }
+        .input-group {
+            margin-bottom: 1.2rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        input[type="time"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box; /* Ensures padding doesn't affect width */
+        }
+        .break-section {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 1rem;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result-box {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            display: none; /* Hidden by default */
+        }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .total {
+            font-weight: bold;
+            color: #007bff;
+            border-top: 1px solid #ccc;
+            padding-top: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>⏱️ Hours Calculator</h2>
+    
+    <div class="input-group">
+        <label>Start Time</label>
+        <input type="time" id="startTime">
+    </div>
+
+    <div class="input-group">
+        <label>End Time</label>
+        <input type="time" id="endTime">
+    </div>
+
+    <div class="input-group">
+        <label>Break Duration</label>
+        <div class="break-section">
+            <input type="number" id="breakHours" placeholder="Hrs" min="0">
+            <input type="number" id="breakMins" placeholder="Mins" min="0">
+        </div>
+    </div>
+
+    <button onclick="calculateTime()">Calculate</button>
+    <p id="errorMsg" class="error">Please enter both start and end times.</p>
+
+    <div id="resultBox" class="result-box">
+        <div class="result-row">
+            <span>Total Duration:</span>
+            <span id="grossTime">0h 0m</span>
+        </div>
+        <div class="result-row">
+            <span>Break Time:</span>
+            <span id="breakTimeDisplay">0h 0m</span>
+        </div>
+        <div class="result-row total">
+            <span>Actual Work Time:</span>
+            <span id="netTime">0h 0m</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculateTime() {
+        const startInput = document.getElementById('startTime').value;
+        const endInput = document.getElementById('endTime').value;
+        const breakHrs = parseInt(document.getElementById('breakHours').value) || 0;
+        const breakMins = parseInt(document.getElementById('breakMins').value) || 0;
+        const errorMsg = document.getElementById('errorMsg');
+        const resultBox = document.getElementById('resultBox');
+
+        if (!startInput || !endInput) {
+            errorMsg.style.display = 'block';
+            resultBox.style.display = 'none';
+            return;
+        }
+
+        errorMsg.style.display = 'none';
+
+        // Create Date objects for today
+        let startDate = new Date(`2000-01-01T${startInput}`);
+        let endDate = new Date(`2000-01-01T${endInput}`);
+
+        // Handle overnight shifts (if end time is earlier than start time, assume next day)
+        if (endDate < startDate) {
+            endDate.setDate(endDate.getDate() + 1);
+        }
+
+        // Calculate difference in milliseconds
+        let diffMs = endDate - startDate;
+        
+        // Convert break to milliseconds
+        const breakMs = (breakHrs * 60 * 60 * 1000) + (breakMins * 60 * 1000);
+
+        // Calculate Net Time
+        let netMs = diffMs - breakMs;
+
+        // Display Logic
+        document.getElementById('grossTime').innerText = msToTime(diffMs);
+        document.getElementById('breakTimeDisplay').innerText = `${breakHrs}h ${breakMins}m`;
+        
+        if (netMs < 0) {
+            document.getElementById('netTime').innerText = "Break is longer than shift!";
+            document.getElementById('netTime').style.color = "red";
+        } else {
+            document.getElementById('netTime').innerText = msToTime(netMs);
+            document.getElementById('netTime').style.color = "#007bff";
+        }
+
+        resultBox.style.display = 'block';
+    }
+
+    function msToTime(duration) {
+        let minutes = Math.floor((duration / (1000 * 60)) % 60);
+        let hours = Math.floor((duration / (1000 * 60 * 60)));
+
+        return `${hours}h ${minutes}m`;
+    }
+</script>
+
+</body>
+</html>
